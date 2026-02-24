@@ -59,6 +59,20 @@ class Database:
                 );
                 """)
 
+            # Создание таблицы популярных сервисов
+            self.cursor.execute("""
+            CREATE TABLE IF EXISTS popular_services (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(50) NOT NULL,
+                category VARCHAR(50) NOT NULL CHECK (category IN ('entertainment', 'productivity','gaming', 'universal', 'health', 'other')),
+                price DECIMAL(10, 2) NOT NULL,
+                period VARCHAR(50) NOT NULL CHECK (period IN ('day', 'week', 'month', 'year'))
+                icon_url VARCHAR(255),
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+
             # Создание индексов
             self.cursor.execute("""
                     CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id
@@ -148,6 +162,20 @@ class Database:
             return self.cursor.fetchall()
         except Exception as e:
             print(f"❌ Ошибка при получении подписок: {e}")
+            return None
+
+    def get_spending_by_category(self, user_id):
+        try:
+            self.cursor.execute("""
+            SELECT id, name, price, period, category, next_spend
+            FROM subscriptions
+            WHERE user_id = %s
+            ORDER BY category ASC;
+            """, (user_id,))
+
+            return self.cursor.fetchall()
+        except Exception as e:
+            print(f"❌ Ошибка при получении подписок по категориям: {e}")
             return None
 
     def update_subscription(self, subscription_id, **kwargs):
